@@ -1,0 +1,140 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Snake</title>
+</head>
+<body>
+<h1>Testing</h1>
+
+<canvas id="canvas" width="1100" height="1000"></canvas>
+</body>
+<script>
+    var canvas = document.getElementById("canvas");
+    var canvasContext = canvas.getContext("2d");
+    //Game Grid Options - Adjust these to change size of Game Tiles
+    var gridSizeX = 40;
+    var gridSizeY = 40;
+    var cellSize = 20;
+    var offset = cellSize * 2;
+    //Game State Variables - Dont adjust these
+    var foodPosition = {x: 0,y: 0};
+    var snake = [];
+    var playing = false;
+    var speedX = -1;
+    var speedY = 0;
+    var tickRate = 5;
+    //Difficulty Options
+    var tickRateNormal = 5;
+    var tickRatePressed = 10;
+    //initialize Game
+    getNewFoodPosition();
+    resetSnake();
+    redrawSnake();
+
+    addEventListener("keydown", event => {
+        if(!playing)
+        {
+            resetSnake();
+            gameLoop();
+            playing = true;
+        }
+        if(event.key === 'ArrowUp') {
+            changeSpeed(0,-1);
+        }
+        if(event.key === 'ArrowDown') {
+            changeSpeed(0,1);
+        }
+        if(event.key === 'ArrowLeft') {
+            changeSpeed(-1,0);
+        }
+        if(event.key === 'ArrowRight') {
+            changeSpeed(1,0);
+        }
+    });
+    function changeSpeed(x,y) {
+        speedX = x;
+        speedY = y;
+        tickRate = tickRatePressed;
+    }
+
+    addEventListener("keyup", event => {
+        console.log(event.key);
+        switch (event.key) {
+            case 'ArrowUp':
+            case 'ArrowDown':
+            case 'ArrowLeft':
+            case 'ArrowRight':
+                tickRate = tickRateNormal;
+        }
+    });
+
+    async function gameLoop() {
+        while(isAlive()) {
+            await new Promise(r => setTimeout(r, 1000 / tickRate));
+            move(speedX,speedY);
+        }
+        canvasContext.font = '50px serif';
+        canvasContext.strokeText("Youre Dead",offset + (gridSizeX * cellSize / 2),offset + (gridSizeY * cellSize / 2));
+        playing = false;
+    }
+
+    function getNewFoodPosition() {
+        foodPosition = {x: Math.floor(Math.random() * gridSizeX), y: Math.floor(Math.random() * gridSizeY)}
+    }
+
+    function resetSnake() {
+        for(let i = 0; i< 4;i++) {
+            snake[i] =  {x: gridSizeX / 2 + i,y: gridSizeY / 2}
+        }
+    }
+
+    function move(x,y) {
+        snake.unshift({x: snake[0].x + x,y: snake[0].y + y});
+        if(!(snake[0].x === foodPosition.x && snake[0].y === foodPosition.y)) {
+            snake.pop();
+        } else {
+            getNewFoodPosition();
+        }
+        redrawSnake();
+    }
+
+    function redrawSnake() {
+        canvasContext.clearRect(0,0,canvas.width,canvas.height);
+        canvasContext.strokeStyle = "black";
+        canvasContext.strokeRect(offset, offset, gridSizeX * cellSize, gridSizeY * cellSize);
+
+        canvasContext.fillStyle = "green";
+        let foodX = foodPosition.x * cellSize + offset + cellSize / 4;
+        let foody = foodPosition.y * cellSize + offset + cellSize / 4;
+        canvasContext.fillRect(foodX,foody,cellSize / 2,cellSize / 2);
+        drawSnakePart(snake[0].x, snake[0].y,"red");
+        for (let i = 1; i < snake.length; i++) {
+            drawSnakePart(snake[i].x, snake[i].y,"blue");
+        }
+    }
+
+    function drawSnakePart(x,y,color) {
+        canvasContext.fillStyle = color;
+        canvasContext.fillRect(x * cellSize + offset,y * cellSize + offset,cellSize,cellSize)
+    }
+
+    function isAlive() {
+        let alive = true;
+
+        if(snake[0].x >= gridSizeX || snake[0].x < 0 || snake[0].y >= gridSizeY || snake[0].y < 0) {
+            alive = false;
+        }
+
+        if(alive) {
+            for (let i = 1; i < snake.length; i++) {
+                if(snake[0].x === snake[i].x && snake[0].y === snake[i].y) {
+                    alive = false;
+                    break;
+                }
+            }
+        }
+        return alive;
+    }
+</script>
+</html>
